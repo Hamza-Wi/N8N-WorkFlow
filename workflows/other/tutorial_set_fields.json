@@ -1,0 +1,131 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a0ee79e7-9a23-4957-87ff-06c0df8a2eb2",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "15f29fd6-0025-4edd-bbb4-cb4344c3628c",
+              "name": "Name",
+              "value": "<NAME>",
+              "type": "string"
+            },
+            {
+              "id": "ea66d9b8-062d-44a1-a3d2-a241cf7b2fcc",
+              "name": "Age",
+              "value": 20,
+              "type": "number"
+            },
+            {
+              "id": "0fa1287e-3f13-4ab0-ae48-bcbef7122430",
+              "name": "Email",
+              "value": "<EMAIL>",
+              "type": "string"
+            },
+            {
+              "id": "8b3bfa0d-cfca-4824-adf1-0182966fe73e",
+              "name": "Phone number",
+              "value": "<PHONE_NUMBER>",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "308cad04-5a11-4274-bce4-b88d2a7bc070",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "15f29fd6-0025-4edd-bbb4-cb4344c3628c",
+              "name": "Name",
+              "value": "<NAME>",
+              "type": "string"
+            },
+            {
+              "id": "ea66d9b8-062d-44a1-a3d2-a241cf7b2fcc",
+              "name": "Age",
+              "value": 20,
+              "type": "number"
+            },
+            {
+              "id": "0fa1287e-3f13-4ab0-ae48-bcbef7122430",
+              "name": "=Email",
+              "value": "<EMAIL>",
+              "type": "string"
+            },
+            {
+              "id": "8b3bfa0d-cfca-4824-adf1-0182966fe73e",
+              "name": "=Phone number",
+              "value": "<PHONE_NUMBER>",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        528,
+        0
+      ],
+      "id": "60196a93-7174-41df-9d26-c9797e07972c",
+      "name": "Edit Fields1"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": {},
+  "triggerCount": 0,
+  "meta": null
+}

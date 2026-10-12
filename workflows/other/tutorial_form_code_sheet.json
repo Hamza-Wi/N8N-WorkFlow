@@ -1,0 +1,101 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "authentication": "n8nUserAuth",
+        "formTitle": "Form testing",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Stu Name"
+            },
+            {
+              "fieldLabel": "Phone num",
+              "fieldType": "number",
+              "defaultValue": "<PHONE_NUMBER>"
+            },
+            {
+              "fieldLabel": "Age?",
+              "fieldType": "number"
+            },
+            {
+              "fieldLabel": "Additional ",
+              "fieldType": "textarea"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        -448,
+        -208
+      ],
+      "id": "437283ff-4bc6-4c07-bc75-817e7feeaf87",
+      "name": "On form submission",
+      "webhookId": "<WEBHOOK_ID>"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        48,
+        -208
+      ],
+      "id": "019f546d-ff8c-4d19-9f89-c0da1d32f4ac",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "resource": "spreadsheet",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        512,
+        -208
+      ],
+      "id": "be0378f3-7c20-4b3d-9a33-4b66561710c8",
+      "name": "Create spreadsheet"
+    }
+  ],
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Create spreadsheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": {},
+  "triggerCount": 0,
+  "meta": null
+}

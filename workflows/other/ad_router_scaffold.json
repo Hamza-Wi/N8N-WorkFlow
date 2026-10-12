@@ -1,0 +1,279 @@
+{
+  "name": "المعلن الذكي - Router",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "المعلن الذكي",
+        "formDescription": "أدر إعلاناتك ومحتواك من هون",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "شو بدك تسوي؟",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "نزّل إعلان جديد"
+                  },
+                  {
+                    "option": "شغّل إعلان"
+                  },
+                  {
+                    "option": "طفّي إعلان"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "اسم المنتج"
+            },
+            {
+              "fieldLabel": "رابط الفيديو (Google Drive)"
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "b886b2e8-4c15-477a-a0e3-0a5e22c08ec9",
+      "name": "المعلن الذكي - فورم",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        96
+      ],
+      "webhookId": "<WEBHOOK_ID>"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "<GOOGLE_SHEET_ID>"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Active Ads"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {}
+        },
+        "options": {}
+      },
+      "id": "8828eb1e-fbeb-4dbc-8520-d0dbabfee952",
+      "name": "تسجيل الطلب الخام",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        96
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "<CREDENTIAL_ID>",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.action_raw }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "نزّل إعلان جديد"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "668076d2-3a2d-4776-a0f5-0d874b2cc604",
+      "name": "هل هو نزّل إعلان جديد؟",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "next-step",
+              "name": "next_step",
+              "value": "سيتم بناء إنشاء الحملة هنا لاحقًا",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "27365631-e648-436d-add0-a0b8d3eab08c",
+      "name": "مسار إنشاء إعلان (لاحقًا)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        896,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "next-step",
+              "name": "next_step",
+              "value": "سيتم بناء تشغيل أو إيقاف الإعلان هنا لاحقًا",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "8088b786-1885-4435-827b-10cd8d98bc81",
+      "name": "مسار تشغيل أو إيقاف إعلان (لاحقًا)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        896,
+        192
+      ]
+    },
+    {
+      "id": "a4e1679e-8817-4a1c-a375-b6534b89065a",
+      "name": "تجهيز بيانات السجل",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        96
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "product_name",
+              "type": "string",
+              "value": "={{ $json[\"اسم المنتج\"] }}"
+            },
+            {
+              "id": "a2",
+              "name": "status",
+              "type": "string",
+              "value": "={{ $json[\"شو بدك تسوي؟\"] === \"نزّل إعلان جديد\" ? \"pending\" : $json[\"شو بدك تسوي؟\"] }}"
+            },
+            {
+              "id": "a3",
+              "name": "created_at",
+              "type": "string",
+              "value": "={{ $now.toISO() }}"
+            },
+            {
+              "id": "a4",
+              "name": "video_link_raw",
+              "type": "string",
+              "value": "={{ $json[\"رابط الفيديو (Google Drive)\"] }}"
+            },
+            {
+              "id": "a5",
+              "name": "action_raw",
+              "type": "string",
+              "value": "={{ $json[\"شو بدك تسوي؟\"] }}"
+            }
+          ]
+        },
+        "includeOtherFields": false,
+        "mode": "manual"
+      }
+    }
+  ],
+  "connections": {
+    "تسجيل الطلب الخام": {
+      "main": [
+        [
+          {
+            "node": "هل هو نزّل إعلان جديد؟",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "هل هو نزّل إعلان جديد؟": {
+      "main": [
+        [
+          {
+            "node": "مسار إنشاء إعلان (لاحقًا)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "مسار تشغيل أو إيقاف إعلان (لاحقًا)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "المعلن الذكي - فورم": {
+      "main": [
+        [
+          {
+            "node": "تجهيز بيانات السجل",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "تجهيز بيانات السجل": {
+      "main": [
+        [
+          {
+            "node": "تسجيل الطلب الخام",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "pinData": {},
+  "triggerCount": 0,
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "templateCredsSetupCompleted": true
+  }
+}

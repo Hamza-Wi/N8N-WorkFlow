@@ -1,0 +1,260 @@
+{
+  "name": "AI Restaurant Feedback Analyzer",
+  "nodes": [
+    {
+      "id": "db1897d1-cd92-4439-9536-dc4e46138456",
+      "name": "On form submission",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        112
+      ],
+      "parameters": {
+        "formTitle": "Restaurant Feedback Form",
+        "formDescription": "Please share your dining experience with us",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Customer Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Rating",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Feedback",
+              "fieldType": "textarea",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "webhookId": "<WEBHOOK_ID>"
+    },
+    {
+      "id": "a34bd180-9aec-44aa-917d-fa641885adcf",
+      "name": "Code in JavaScript",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        112
+      ],
+      "parameters": {
+        "jsCode": "const customerName = $input.item.json['Customer Name'];\nconst email = $input.item.json['Email'];\nconst rating = parseInt($input.item.json['Rating']);\nconst feedback = $input.item.json['Feedback'];\n\nif (rating < 1 || rating > 5) {\n  throw new Error('Rating must be between 1 and 5');\n}\n\nconst wordCount = feedback.trim().split(/\\s+/).filter(word => word.length > 0).length;\n\nreturn [{\n  json: {\n    customerName,\n    email,\n    rating,\n    feedback,\n    wordCount,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      }
+    },
+    {
+      "id": "ecfb4505-ff5d-4a89-9562-f4b590499509",
+      "name": "Basic LLM Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        448,
+        112
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this restaurant customer feedback and provide a structured analysis.\n\nCustomer Name: {{ $json.customerName }}\nRating: {{ $json.rating }}/5\nFeedback: {{ $json.feedback }}\nWord Count: {{ $json.wordCount }}\n\nIdentify and return:\n- sentiment: overall sentiment (Positive/Negative/Neutral/Mixed)\n- category: main feedback category (Food/Service/Ambiance/Value/Cleanliness/Overall)\n- priority: urgency level (High/Medium/Low)\n- score: customer satisfaction score 0-100\n- issues: main issues identified in the feedback as a string\n- recommendedAction: specific actionable recommendation for the restaurant team",
+        "hasOutputParser": true
+      }
+    },
+    {
+      "id": "c4d30a49-fce7-488d-94e0-54231402f55e",
+      "name": "Google Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        464,
+        336
+      ],
+      "parameters": {
+        "modelName": "models/gemini-1.5-flash"
+      },
+      "credentials": {
+        "googlePalmApi": {
+          "id": null,
+          "name": "Gateway credits",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "id": "05f6ab1c-4150-4fe6-9385-0a4daf7483ad",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        592,
+        336
+      ],
+      "parameters": {
+        "schemaType": "fromJson",
+        "jsonSchemaExample": "{\"sentiment\":\"Neutral\",\"category\":\"Service\",\"priority\":\"Medium\",\"score\":60,\"issues\":\"Poor quality of customer service\",\"recommendedAction\":\"Conduct service excellence training for front-of-house staff to match food quality standards\"}"
+      }
+    },
+    {
+      "id": "9a4482fe-b362-491e-a869-3bd517c7ab33",
+      "name": "Append row in sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        800,
+        112
+      ],
+      "parameters": {
+        "operation": "append",
+        "documentId": "<__PLACEHOLDER_VALUE__Your Google Sheet document URL or ID__>",
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Customer Name": "={{ $('Code in JavaScript').item.json.customerName }}",
+            "Email": "={{ $('Code in JavaScript').item.json.email }}",
+            "Rating": "={{ $('Code in JavaScript').item.json.rating }}",
+            "Feedback": "={{ $('Code in JavaScript').item.json.feedback }}",
+            "Sentiment": "={{ $json.sentiment }}",
+            "Category": "={{ $json.category }}",
+            "Priority": "={{ $json.priority }}",
+            "Score": "={{ $json.score }}",
+            "Issues": "={{ $json.issues }}",
+            "Recommended Action": "={{ $json.recommendedAction }}"
+          }
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "<CREDENTIAL_ID>",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "944530df-cb6c-4080-96f7-df8339819cfc",
+      "name": "Send a message",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1024,
+        112
+      ],
+      "parameters": {
+        "operation": "send",
+        "sendTo": "={{ $('Code in JavaScript').item.json.email }}",
+        "subject": "Thank You for Your Feedback",
+        "emailType": "text",
+        "message": "=Dear {{ $('Code in JavaScript').item.json.customerName }},\n\nThank you for taking the time to share your feedback with us.\n\nYour opinion is very important to us and helps us improve our restaurant and provide a better experience.\n\nWe truly appreciate your feedback.\n\nBest regards,\nRestaurant Team",
+        "options": {}
+      },
+      "webhookId": "<WEBHOOK_ID>"
+    },
+    {
+      "id": "63c12162-cbb7-4c98-8ed0-e40ce3f6d8f8",
+      "name": "Sticky Note dedce59c",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        448,
+        320
+      ],
+      "parameters": {
+        "content": "## Restaurant Feedback Analyzer - Setup Guide\n\n**Step 1 - Google Sheet:** Open \"Append row in sheet\" and paste your Google Sheet URL.\n\n**Step 2 - Sheet Headers (Row 1):**\nCustomer Name | Email | Rating | Feedback | Sentiment | Category | Priority | Score | Issues | Recommended Action\n\n**Step 3 - Credentials:** Configure Google Gemini API, Google Sheets OAuth2, and Gmail OAuth2 in Settings > Credentials.\n\n**Step 4 - Activate:** Toggle the workflow ON to get the live form URL from the Form Trigger node."
+      }
+    }
+  ],
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": {},
+  "triggerCount": 0,
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp"
+  }
+}
